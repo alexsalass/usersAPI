@@ -41,9 +41,17 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      - name: Install PostgreSQL client (psql)
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+
+      - name: Init test DB schema + seed
+        env:
+          PGPASSWORD: test123
+        run: |
+          psql -h localhost -p 55432 -U test -d testdb -f tests/sql/init.sql
+
       - name: Run tests
         run: pytest -q
-
 
   publish:
     name: CD - Build & Push Image (main only)
@@ -67,7 +75,6 @@ jobs:
           context: .
           push: true
           tags: ghcr.io/${{ github.repository }}:latest
-
 
   deploy:
     name: CD - Deploy to VPS (main only)
