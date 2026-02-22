@@ -105,4 +105,6 @@ jobs:
             cd /opt/users-api
             docker compose pull
             docker compose up -d
-            docker ps
+            docker ps  
+
+            
