@@ -62,37 +62,28 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set image tags (lowercase)
-        id: meta
-        shell: bash
-        run: |
-            IMAGE="ghcr.io/${GITHUB_REPOSITORY,,}"
-            echo "image=$IMAGE" >> "$GITHUB_OUTPUT"
-            echo "tag_latest=$IMAGE:latest" >> "$GITHUB_OUTPUT"
-            echo "tag_sha=$IMAGE:${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
-
       - name: Log in to GHCR
         uses: docker/login-action@v3
         with:
-            registry: ghcr.io
-            username: ${{ github.actor }}
-            password: ${{ secrets.GITHUB_TOKEN }}   
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push
         uses: docker/build-push-action@v6
         with:
-            context: .
-            push: true
-            tags: |
-                ${{ steps.meta.outputs.tag_latest }}
-                ${{ steps.meta.outputs.tag_sha }}
+          context: .
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/usersapi:latest
+            ghcr.io/${{ github.repository_owner }}/usersapi:${{ github.sha }}
 
   deploy:
     name: CD - Deploy to VPS (main only)
     runs-on: ubuntu-latest
     needs: publish
-    if: github.ref == 'refs/heads/main'
-    
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
     steps:
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.0.3
@@ -105,6 +96,5 @@ jobs:
             cd /opt/users-api
             docker compose pull
             docker compose up -d
-            docker ps  
-
+            docker ps
             
